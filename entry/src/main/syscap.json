@@ -1,0 +1,13 @@
+{
+  "devices": {
+    "general": [
+      "wearable"
+    ]
+  },
+  "development": {
+    "addedSysCaps": [
+      "SystemCapability.FileManagement.File.FileIO",
+      "SystemCapability.Multimedia.Media.Core"
+    ]
+  }
+}
