@@ -7,11 +7,11 @@ and saving voice clips quickly and easily.
 
 # Preview
 
-<p align="left">
+<div>
   <img src="./screenshots/img1.png" width="25%">
   <img src="./screenshots/img2.png" width="25%">
   <img src="./screenshots/img3.png" width="25%">
-</p>
+</div>
 
 # Use Cases
 

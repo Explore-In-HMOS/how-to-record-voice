@@ -4,19 +4,17 @@ import { common } from '@kit.AbilityKit';
 import { fileIo as fs } from '@kit.CoreFileKit';
 
 
-export
-enum AudioStatus {
+export enum AudioStatus {
   Undefined,
   Playing,
   Paused,
-  Released,
+  Released
 }
 
 @ObservedV2
 export class AudioService {
   static _instance: AudioService;
 
-  // Ensure only one instance of this ViewModel is created
   static getInstance() {
     if (!AudioService._instance) {
       AudioService._instance = new AudioService(AudioStatus.Undefined);
@@ -29,7 +27,6 @@ export class AudioService {
     this.audioStatus = audioStatus;
   }
 
-
   private player: media.AVPlayer | undefined;
   @Trace audioStatus: AudioStatus;
   private progressTimer: number | undefined;
@@ -38,12 +35,11 @@ export class AudioService {
   @Trace canPlay: boolean = false;
 
   private startProgressUpdater() {
-    this.clearProgressUpdater(); // Clear any existing timer
+    this.clearProgressUpdater();
     this.progressTimer = setInterval(() => {
       this.progress = this.getCurrentProgressPercentage();
-      console.log(`Progress: ${this.progress}%`);
-      // You can also notify the UI here via state or event if needed
-    }, 1000); // update every second
+      console.info(`Progress: ${this.progress}%`);
+    }, 1000);
   }
 
   private clearProgressUpdater() {
@@ -53,15 +49,12 @@ export class AudioService {
     }
   }
 
-
   public getCurrentProgressPercentage(): number {
     if (!this.player || this.player.duration === 0) {
       return 0;
     }
-
     const currentSeconds = this.player.currentTime / 1_000_000;
     const totalSeconds = this.player.duration / 1_000_000;
-
     return Math.floor((currentSeconds / totalSeconds) * 100);
   }
 
@@ -72,7 +65,7 @@ export class AudioService {
         case 'initialized':
           avPlayer.audioRendererInfo = {
             usage: audio.StreamUsage.STREAM_USAGE_MUSIC,
-            rendererFlags: 0,
+            rendererFlags: 0
           };
           avPlayer.prepare();
           break;
@@ -109,32 +102,32 @@ export class AudioService {
       this.player = await media.createAVPlayer();
       this.setCallbacks(this.player);
 
-      // open file to get fd, offset, length
       const file = await fs.open(filePath, fs.OpenMode.READ_ONLY);
       const stat = await fs.stat(filePath);
 
       const avFileDescriptor: media.AVFileDescriptor = {
         fd: file.fd,
         offset: 0,
-        length: stat.size,
+        length: stat.size
       };
 
-      this.player.fdSrc = avFileDescriptor; // ✅ correct way
+      this.player.fdSrc = avFileDescriptor;
     } catch (err) {
       console.error('Error playing audio file:', err);
     }
+    finally {
+      fs.close(fs.OpenMode.READ_ONLY);
+    }
   }
 
-
-  public async playEmbeddedMp3(fileName: string) {
+  public async playEmbeddedMp3(context: common.UIAbilityContext, fileName: string) {
     this.release();
-    const context = getContext(this) as common.UIAbilityContext;
     const resourceFd = await context.resourceManager.getRawFd(fileName);
 
     const avFileDescriptor: media.AVFileDescriptor = {
       fd: resourceFd.fd,
       offset: resourceFd.offset,
-      length: resourceFd.length,
+      length: resourceFd.length
     };
     this.player = await media.createAVPlayer();
     this.setCallbacks(this.player);

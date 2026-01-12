@@ -1,8 +1,8 @@
 import { abilityAccessCtrl, PermissionRequestResult, Permissions } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { ArcButton, ArcButtonOptions, ArcButtonPosition, ArcButtonStyleMode } from '@kit.ArkUI';
 import Recorder from '../services/RecorderService';
 import { AudioService, AudioStatus } from '../services/AudioService';
+import { hilog } from '@kit.PerformanceAnalysisKit';
 
 @Entry
 @Component
@@ -11,6 +11,7 @@ struct Index {
   @State recorder: Recorder = new Recorder()
   audioService: AudioService = AudioService.getInstance();
   private filesDir = this.getUIContext().getHostContext()?.filesDir!
+  private permissions : Array<Permissions> = ['ohos.permission.MICROPHONE']
 
   onDidBuild(): void {
     this.requestMicPermission()
@@ -19,34 +20,26 @@ struct Index {
   async requestMicPermission() {
     const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
     const context = this.getUIContext().getHostContext()
-    const permissions: Permissions[] = ['ohos.permission.MICROPHONE'];
-
-    try {
-      // request permission from user
-      let granted =
-        (await (atManager.requestPermissionsFromUser(context,
-          permissions) as Promise<PermissionRequestResult>)).authResults[0] == 0
-      while (!granted) {
-        // request permission on settings
-        granted = (await atManager.requestPermissionOnSetting(context, permissions))[0] ==
-        abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED
-      }
-    } catch (error) {
-      const err: BusinessError = error as BusinessError;
-      console.error(`Failed to check access token. Code is ${err.code}, message is ${err.message}`);
-    }
+    atManager.requestPermissionsFromUser(context, this.permissions)
+      .then((data: PermissionRequestResult) => {
+        hilog.info(0x0000, '',
+          `Permissions have been granted`)
+      })
+      .catch((err: BusinessError) => {
+        hilog.error(0x0000, '',
+          `Failed to request permissions from user. Code is ${err.code}, message is ${err.message}`);
+      })
   }
 
   async startRecording(): Promise<void> {
-    if (this.recorder.readyToRecord) { // start the recording
+    if (this.recorder.readyToRecord) {
       this.isRecording = true;
       await this.recorder.start(this.getUIContext().getHostContext()!)
     }
   }
 
   async stopRecording(): Promise<void> {
-    if (this.recorder.recording) { // stop and save
-
+    if (this.recorder.recording) {
       await this.recorder.stopAndSave()
       this.isRecording = false;
       this.audioService.canPlay = true;
@@ -106,19 +99,17 @@ struct Index {
             bottom: 5
           })
           .onClick(() => {
-            if (this.audioService.audioStatus == AudioStatus.Playing) {
+            if (this.audioService.audioStatus === AudioStatus.Playing) {
               this.finishAudio();
             } else {
               this.playAudio();
             }
           })
         }
-
       }
       .height('100%')
       .width('100%')
       .justifyContent(FlexAlign.Center)
-
     }
     .height('100%')
     .width('100%')

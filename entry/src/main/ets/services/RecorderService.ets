@@ -18,47 +18,43 @@ export default class Recorder {
 
 
   async start(context: Context) {
-    // initialize recorder
     try {
       this.recorder = await media.createAVRecorder()
-
-      // Callback function for state changes.
       this.recorder.on('stateChange', (state: media.AVRecorderState, reason: media.StateChangeReason) => {
-        this.recorderState = state // track state changes
+        this.recorderState = state
       })
-
-      // Callback function for errors.
       this.recorder.on('error', (err: BusinessError) => {
         console.error(`avRecorder failed, code is ${err.code}, message is ${err.message}`);
       })
 
       let avProfile: media.AVRecorderProfile = {
-        audioBitrate: 100000, // Audio bit rate.
-        audioChannels: 2, // Number of audio channels.
-        audioCodec: media.CodecMimeType.AUDIO_AAC, // Audio encoding format.
-        audioSampleRate: 48000, // Audio sampling rate.
-        fileFormat: media.ContainerFormatType.CFT_MPEG_4A, // Container format.
+        audioBitrate: 100000,
+        audioChannels: 2,
+        audioCodec: media.CodecMimeType.AUDIO_AAC,
+        audioSampleRate: 48000,
+        fileFormat: media.ContainerFormatType.CFT_MPEG_4A
       };
 
-      let filePath: string = context.filesDir + `/example_audio1.mp3`;
+      let filePath: string = `${context.filesDir}/example_audio1.mp3`;
       this.fileName = filePath.split('/').pop() as string
       let audioFile: fs.File = fs.openSync(filePath, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE);
-      let fileFd = audioFile.fd; // Obtain the file FD.
+      let fileFd = audioFile.fd;
 
       let avConfig: media.AVRecorderConfig = {
-        audioSourceType: media.AudioSourceType.AUDIO_SOURCE_TYPE_MIC, // Audio input source.
+        audioSourceType: media.AudioSourceType.AUDIO_SOURCE_TYPE_MIC,
         profile: avProfile,
-        url: 'fd://' + fileFd.toString(), // Obtain the file descriptor of the created audio file
+        url: `fd://${fileFd.toString()}`
       };
 
       await this.recorder.prepare(avConfig)
       await this.recorder.start();
     } catch (e) {
-      console.log('start err:', e.code, e.message)
+      console.error('start err:', e.code, e.message)
+    }
+    finally {
+      fs.close(fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE);
     }
   }
-
-
 
   async stopAndSave() {
     try {
@@ -69,7 +65,7 @@ export default class Recorder {
 
       return this.fileName
     } catch (e) {
-      console.log('stop err:', e.code, e.message)
+      console.error('stop err:', e.code, e.message)
       throw new Error(e.message)
     }
   }

@@ -1,6 +1,6 @@
 {
   "app": {
-    "bundleName": "com.hmosdemos.VoiceRecorder",
+    "bundleName": "com.hmosdemos.wearable.how_to_record_voice",
     "vendor": "hmosdemos",
     "versionCode": 1000000,
     "versionName": "1.0.0",
